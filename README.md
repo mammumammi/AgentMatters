@@ -6,7 +6,7 @@
 
 Built for **ETHOnline 2026** • Featuring **Gensyn AXL** & **KeeperHub**
 
-[![Live Demo](https://img.shields.io/badge/Live_Dashboard-triguard.onrender.com-4f46e5?style=for-the-badge)](https://triguard-dashboard.onrender.com)
+[![Live Demo](https://img.shields.io/badge/Live_Dashboard-triguard.onrender.com-4f46e5?style=for-the-badge)](https://triguard.onrender.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
 
 </div>
