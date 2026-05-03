@@ -1,7 +1,6 @@
 {
   "privateKeyPath": "key1.pem",
-  "Listen": ["tls://0.0.0.0:7001"],
-  "Peers":[],
+  "api_port": 9002,
   "tcp_port": 7001,
-  "api_port": 9002
+  "peers": ["tls://127.0.0.1:7002", "tls://127.0.0.1:7003"]
 }
