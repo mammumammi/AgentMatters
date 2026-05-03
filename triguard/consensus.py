@@ -10,8 +10,8 @@ def check_consensus(tx_hash):
     v = votes.get(tx_hash, {})
     suspicious = sum(1 for val in v.values() if val == "suspicious")
     clean = len(v) - suspicious
-    if suspicious >= 2:
+    if suspicious >= 1:   # trigger on 1 vote for demo
         return "ALERT"
-    if clean >= 2:
+    if clean >= 1:
         return "CLEAN"
     return None

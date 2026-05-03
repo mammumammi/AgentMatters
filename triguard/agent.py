@@ -2,6 +2,7 @@ import os
 import sys
 import time
 import json
+import requests
 from web3 import Web3
 from dotenv import load_dotenv
 from axl import send_vote, receive_messages
@@ -9,6 +10,14 @@ from consensus import cast_vote
 from keeper import log_alert
 
 load_dotenv()
+
+DASHBOARD_URL = "http://127.0.0.1:5050/api/agent/event"
+
+def post_dashboard(ev):
+    try:
+        requests.post(DASHBOARD_URL, json=ev, timeout=2)
+    except Exception:
+        pass
 
 # ── Config from args ──────────────────────────────────────────
 AGENT_ID  = sys.argv[1]          # agent1 / agent2 / agent3
@@ -74,11 +83,23 @@ def check_block():
         print(f"\n[{AGENT_ID}] 📦 Block {block.number} "
               f"— {len(block.transactions)} txs")
 
+        # Report block check to dashboard
+        post_dashboard({"type": "block", "agent": AGENT_ID,
+                        "block": block.number, "tx_count": len(block.transactions)})
+
         for tx in block.transactions[:5]:  # check first 5 txs
             tx_hash   = tx.hash.hex()
-            gas_gwei  = float(w3.from_wei(tx.gasPrice, "gwei"))
+            gas_gwei  = round(float(w3.from_wei(tx.gasPrice, "gwei")), 4)
             verdict   = "suspicious" if gas_gwei > GAS_THRESHOLD_GWEI \
                         else "clean"
+            
+            # Extract deep transaction data for KeeperHub Risk Assessment
+            tx_data = {
+                "contract_address": tx.to if tx.to else "",
+                "sender_address": tx.get("from", ""),
+                "transaction_value": str(tx.value),
+                "transaction_calldata": tx.input.hex() if hasattr(tx.input, 'hex') else "0x"
+            }
 
             if verdict == "suspicious":
                 print(f"[{AGENT_ID}] 🚨 High gas: "
@@ -86,6 +107,11 @@ def check_block():
             else:
                 print(f"[{AGENT_ID}] ✓ Clean: "
                       f"{gas_gwei:.2f} gwei → {tx_hash[:12]}...")
+
+            # Report vote to dashboard
+            post_dashboard({"type": "vote", "agent": AGENT_ID,
+                            "tx_hash": tx_hash, "gas_gwei": gas_gwei,
+                            "verdict": verdict, "block": block.number})
 
             # Cast own vote locally
             result = cast_vote(tx_hash, AGENT_ID, verdict)
@@ -97,7 +123,7 @@ def check_block():
             if result == "ALERT" and tx_hash not in alerted:
                 alerted.add(tx_hash)
                 print(f"[{AGENT_ID}] 🔴 CONSENSUS: ALERT!")
-                log_alert(tx_hash, gas_gwei, AGENT_ID)
+                log_alert(tx_hash, gas_gwei, AGENT_ID, tx_data=tx_data)
 
     except Exception as e:
         print(f"[{AGENT_ID}] RPC error: {e}")

@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>TriGuard — Decentralized Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<script src="https://unpkg.com/lenis@1.1.9/dist/lenis.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<style>
+  :root {
+    --bg: #030303;
+    --fg: #f5f5f5;
+    --accent: #4f46e5;
+    --accent-glow: rgba(79, 70, 229, 0.4);
+    --green: #10b981;
+    --red: #ef4444;
+    --border: rgba(255, 255, 255, 0.1);
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Outfit', sans-serif;
+  }
+  
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  
+  body {
+    background-color: var(--bg);
+    color: var(--fg);
+    font-family: var(--sans);
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+  
+  /* Lenis Smooth Scroll */
+  html.lenis, html.lenis body { height: auto; }
+  .lenis.lenis-smooth { scroll-behavior: auto !important; }
+  .lenis.lenis-smooth [data-lenis-prevent] { overscroll-behavior: contain; }
+  .lenis.lenis-stopped { overflow: hidden; }
+  .lenis.lenis-smooth iframe { pointer-events: none; }
+
+  /* Preloader */
+  .preloader {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+  }
+  .preloader-text {
+    font-size: 8vw;
+    font-weight: 900;
+    letter-spacing: -0.04em;
+    overflow: hidden;
+    line-height: 1;
+  }
+  .preloader-text span {
+    display: block;
+    transform: translateY(100%);
+  }
+  .preloader-progress {
+    margin-top: 2rem;
+    font-family: var(--mono);
+    font-size: 1rem;
+    opacity: 0.5;
+  }
+
+  /* Typography */
+  h1, h2, h3 { font-weight: 700; letter-spacing: -0.02em; }
+  
+  /* Navbar */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    padding: 2rem 4rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 100;
+    mix-blend-mode: difference;
+  }
+  .nav-logo { font-size: 1.5rem; font-weight: 900; letter-spacing: -0.04em; }
+  .nav-status { font-family: var(--mono); font-size: 0.875rem; display: flex; align-items: center; gap: 0.5rem; }
+  .pulse-dot { width: 8px; height: 8px; background: var(--green); border-radius: 50%; box-shadow: 0 0 10px var(--green); animation: pulse 2s infinite; }
+
+  /* Hero */
+  .hero {
+    min-height: 100vh;
+    padding: 0 4rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+  }
+  .hero-title {
+    font-size: clamp(4rem, 12vw, 15rem);
+    line-height: 0.85;
+    font-weight: 900;
+    text-transform: uppercase;
+    margin-left: -0.5vw;
+  }
+  .hero-subtitle {
+    margin-top: 2rem;
+    font-size: 1.5rem;
+    font-weight: 300;
+    max-width: 600px;
+    opacity: 0.7;
+    line-height: 1.4;
+  }
+  .hero-bg {
+    position: absolute;
+    top: 0; right: 0; width: 50vw; height: 100vh;
+    background: radial-gradient(circle at center, var(--accent-glow) 0%, transparent 70%);
+    filter: blur(80px);
+    opacity: 0.5;
+    z-index: -1;
+  }
+
+  /* Marquee */
+  .marquee {
+    padding: 2rem 0;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+    overflow: hidden;
+    display: flex;
+    background: rgba(255,255,255,0.02);
+  }
+  .marquee-content {
+    font-family: var(--mono);
+    font-size: 1.5rem;
+    text-transform: uppercase;
+    display: flex;
+    gap: 4rem;
+    padding-right: 4rem;
+  }
+
+  /* Main Dashboard Section */
+  .dashboard-wrapper {
+    padding: 8rem 4rem;
+    max-width: 1800px;
+    margin: 0 auto;
+  }
+  .section-title {
+    font-size: 3rem;
+    margin-bottom: 4rem;
+    font-weight: 300;
+  }
+  .grid-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+  }
+
+  /* Stats Grid */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+  }
+  .stat-card {
+    background: var(--bg);
+    padding: 3rem 2rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: background 0.3s ease;
+  }
+  .stat-card:hover {
+    background: rgba(255,255,255,0.03);
+  }
+  .stat-val { font-size: 5rem; font-weight: 300; font-family: var(--mono); line-height: 1; margin-bottom: 1rem; }
+  .stat-label { font-size: 1rem; color: #888; text-transform: uppercase; letter-spacing: 0.1em; }
+  
+  .stat-val.red { color: var(--red); text-shadow: 0 0 30px rgba(239, 68, 68, 0.4); }
+  .stat-val.green { color: var(--green); text-shadow: 0 0 30px rgba(16, 185, 129, 0.4); }
+
+  /* Agents Stack */
+  .agents-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: 4rem;
+  }
+  .agent-row {
+    border: 1px solid var(--border);
+    padding: 2rem;
+    border-radius: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    background: rgba(255, 255, 255, 0.01);
+    backdrop-filter: blur(10px);
+  }
+  .agent-row:hover {
+    transform: translateX(10px);
+    border-color: rgba(255,255,255,0.3);
+    background: rgba(255, 255, 255, 0.05);
+  }
+  .agent-info h3 { font-size: 1.5rem; margin-bottom: 0.5rem; text-transform: uppercase; }
+  .agent-info p { font-family: var(--mono); font-size: 0.875rem; color: #888; margin-top: 0.25rem;}
+  .agent-metrics { display: flex; gap: 2rem; text-align: right; }
+  .agent-metrics > div { display: flex; flex-direction: column; }
+  .metric-val { font-family: var(--mono); font-size: 1.5rem; }
+  .metric-label { font-size: 0.75rem; color: #666; text-transform: uppercase; }
+
+  /* Live Feed & Alerts */
+  .feed-container {
+    height: 800px;
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    background: rgba(255,255,255,0.01);
+  }
+  .feed-header {
+    padding: 2rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(0,0,0,0.5);
+  }
+  .feed-header h3 { font-size: 1.5rem; }
+  .feed-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem;
+  }
+  .feed-list::-webkit-scrollbar { width: 4px; }
+  .feed-list::-webkit-scrollbar-track { background: transparent; }
+  .feed-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+  
+  .feed-item {
+    padding: 1.5rem;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    animation: fadeIn 0.5s ease-out;
+  }
+  .feed-item:last-child { border-bottom: none; }
+  .feed-item.alert {
+    background: rgba(239, 68, 68, 0.05);
+    border-left: 4px solid var(--red);
+  }
+  .feed-item.suspicious {
+    border-left: 2px solid #f59e0b;
+  }
+  .feed-main { display: flex; flex-direction: column; gap: 0.5rem; }
+  .feed-title { font-weight: 500; font-size: 1.125rem; text-transform: uppercase; }
+  .feed-hash { font-family: var(--mono); font-size: 0.875rem; color: #888; }
+  .feed-meta { display: flex; gap: 1rem; font-family: var(--mono); font-size: 0.75rem; color: #666; }
+  .feed-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    font-size: 0.75rem;
+    font-family: var(--mono);
+    text-transform: uppercase;
+  }
+  .badge-red { background: rgba(239, 68, 68, 0.1); color: var(--red); border: 1px solid rgba(239, 68, 68, 0.3); }
+  .badge-green { background: rgba(16, 185, 129, 0.1); color: var(--green); border: 1px solid rgba(16, 185, 129, 0.3); }
+  .badge-blue { background: rgba(79, 70, 229, 0.1); color: #818cf8; border: 1px solid rgba(79, 70, 229, 0.3); }
+
+  /* KeeperHub Intelligence Section */
+  .kh-section {
+    padding: 0 4rem 8rem;
+    max-width: 1800px;
+    margin: 0 auto;
+  }
+  .kh-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-top: 3rem;
+  }
+  .kh-panel {
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+    overflow: hidden;
+    background: rgba(255,255,255,0.01);
+    display: flex;
+    flex-direction: column;
+    max-height: 600px;
+  }
+  .kh-panel-header {
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid var(--border);
+    background: rgba(0,0,0,0.4);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .kh-panel-header h4 { font-size: 1.1rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.1em; }
+  .kh-panel-body { flex: 1; overflow-y: auto; padding: 0; }
+  .kh-panel-body::-webkit-scrollbar { width: 3px; }
+  .kh-panel-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+  .kh-item {
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    animation: fadeIn 0.4s ease-out;
+  }
+  .kh-item:last-child { border-bottom: none; }
+  .kh-item.high-risk { border-left: 3px solid var(--red); background: rgba(239,68,68,0.03); }
+  .kh-item.medium-risk { border-left: 3px solid #f59e0b; }
+  .kh-item.low-risk { border-left: 3px solid var(--green); }
+  .kh-item-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; }
+  .kh-hash { font-family: var(--mono); font-size: 0.8rem; color: #888; word-break: break-all; margin-bottom: 0.5rem; }
+  .kh-reasoning { font-size: 0.9rem; color: #ccc; line-height: 1.5; }
+  .kh-meta { display: flex; gap: 1rem; font-family: var(--mono); font-size: 0.75rem; color: #666; margin-top: 0.75rem; flex-wrap: wrap; }
+  .risk-gauge { display: flex; align-items: center; gap: 0.75rem; }
+  .risk-bar-bg { width: 80px; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; }
+  .risk-bar-fill { height: 100%; border-radius: 3px; transition: width 0.5s ease; }
+  .risk-num { font-family: var(--mono); font-size: 1rem; font-weight: 600; }
+  .badge-purple { background: rgba(192,132,252,0.1); color: #c084fc; border: 1px solid rgba(192,132,252,0.3); }
+  .kh-empty { padding: 3rem 2rem; text-align: center; color: #555; font-family: var(--mono); font-size: 0.875rem; }
+
+  /* Animations */
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* Media Queries */
+  @media (max-width: 1024px) {
+    .grid-layout { grid-template-columns: 1fr; }
+    .hero { padding: 0 2rem; }
+    .hero-title { font-size: 15vw; }
+    .dashboard-wrapper { padding: 4rem 2rem; }
+    nav { padding: 1.5rem 2rem; }
+  }
+  @media (max-width: 640px) {
+    .stats-grid { grid-template-columns: 1fr; }
+    .agent-row { flex-direction: column; align-items: flex-start; gap: 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Preloader -->
+<div class="preloader">
+  <div class="preloader-text"><span class="pt-line">TRIGUARD</span></div>
+  <div class="preloader-text"><span class="pt-line">CONSENSUS</span></div>
+  <div class="preloader-text"><span class="pt-line">PROTOCOL</span></div>
+  <div class="preloader-progress">0%</div>
+</div>
+
+<nav>
+  <div class="nav-logo">TRIGUARD</div>
+  <div class="nav-status">
+    <div class="pulse-dot"></div>
+    <span id="nav-network">Sepolia Testnet</span>
+  </div>
+</nav>
+
+<main id="smooth-wrapper">
+  <div id="smooth-content">
+
+    <section class="hero">
+      <div class="hero-bg"></div>
+      <h1 class="hero-title">Decentralized<br>Intelligence</h1>
+      <p class="hero-subtitle">Multi-Agent Ethereum Monitor. Powered by Gensyn AXL peer-to-peer network and KeeperHub execution layer.</p>
+    </section>
+
+    <section class="marquee">
+      <div class="marquee-content" id="marquee-1">
+        <span>BLOCK --</span> • <span>3 AGENTS ACTIVE</span> • <span>AXL P2P ROUTING</span> • <span>KEEPERHUB WEBHOOKS</span> • 
+        <span>BLOCK --</span> • <span>3 AGENTS ACTIVE</span> • <span>AXL P2P ROUTING</span> • <span>KEEPERHUB WEBHOOKS</span> • 
+      </div>
+      <div class="marquee-content" id="marquee-2">
+        <span>BLOCK --</span> • <span>3 AGENTS ACTIVE</span> • <span>AXL P2P ROUTING</span> • <span>KEEPERHUB WEBHOOKS</span> • 
+        <span>BLOCK --</span> • <span>3 AGENTS ACTIVE</span> • <span>AXL P2P ROUTING</span> • <span>KEEPERHUB WEBHOOKS</span> • 
+      </div>
+    </section>
+
+    <div class="dashboard-wrapper">
+      <h2 class="section-title">Network State</h2>
+      
+      <div class="grid-layout">
+        <!-- Left Column: Stats & Agents -->
+        <div class="col-left">
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-val" id="st-events">0</div>
+              <div class="stat-label">Total Events</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-val red" id="st-alerts">0</div>
+              <div class="stat-label">Consensus Alerts</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-val green" id="st-clean">0</div>
+              <div class="stat-label">Clean Votes</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-val" id="st-sus">0</div>
+              <div class="stat-label">Suspicious Votes</div>
+            </div>
+          </div>
+
+          <div class="agents-stack" id="axl-nodes">
+            <!-- Agents injected via JS -->
+            <div style="padding: 2rem; color: #666; font-family: var(--mono)">Loading Yggdrasil mesh nodes...</div>
+          </div>
+        </div>
+
+        <!-- Right Column: Live Feed -->
+        <div class="col-right">
+          <div class="feed-container">
+            <div class="feed-header">
+              <h3>Live Feed</h3>
+              <span class="feed-badge badge-blue" id="feed-count">0 EVENTS</span>
+            </div>
+            <div class="feed-list" id="event-feed">
+              <div style="padding: 2rem; color: #666; font-family: var(--mono); text-align: center;">Waiting for blocks...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    </div>
+
+    <!-- KeeperHub Intelligence Section -->
+    <div class="kh-section">
+      <h2 class="section-title" id="kh-section-title">KeeperHub Intelligence</h2>
+      <p style="color:#888;font-size:1rem;margin-top:-3rem;margin-bottom:3rem;font-weight:300">
+        Transactions flagged by decentralized consensus &rarr; analyzed by KeeperHub Web3 AI
+      </p>
+
+      <div class="kh-grid">
+        <!-- Flagged Transactions Panel -->
+        <div class="kh-panel">
+          <div class="kh-panel-header">
+            <h4>🚨 Flagged by Agents</h4>
+            <span class="feed-badge badge-red" id="flagged-count">0 FLAGGED</span>
+          </div>
+          <div class="kh-panel-body" id="flagged-list">
+            <div class="kh-empty">Waiting for consensus alerts to be sent to KeeperHub...</div>
+          </div>
+        </div>
+
+        <!-- Risk Assessment Results Panel -->
+        <div class="kh-panel">
+          <div class="kh-panel-header">
+            <h4>🔬 KeeperHub Risk Assessment</h4>
+            <span class="feed-badge badge-purple" id="risk-count">0 ANALYZED</span>
+          </div>
+          <div class="kh-panel-body" id="risk-list">
+            <div class="kh-empty">Waiting for KeeperHub to return risk scores...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer style="padding: 4rem; text-align: center; border-top: 1px solid var(--border); font-family: var(--mono); color: #666;">
+      <p>TriGuard — Built for ETHOnline 2026</p>
+    </footer>
+
+  </div>
+</main>
+
+<script>
+// ----------------------------------------------------
+// Smooth Scroll & Animations (GSAP + Lenis)
+// ----------------------------------------------------
+const lenis = new Lenis({
+  duration: 1.2,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true
+});
+function raf(time) {
+  lenis.raf(time);
+  requestAnimationFrame(raf);
+}
+requestAnimationFrame(raf);
+
+gsap.registerPlugin(ScrollTrigger);
+
+// Preloader Sequence
+const tl = gsap.timeline();
+let progress = 0;
+const progressEl = document.querySelector('.preloader-progress');
+const interval = setInterval(() => {
+  progress += Math.floor(Math.random() * 10) + 5;
+  if(progress >= 100) {
+    progress = 100;
+    clearInterval(interval);
+    tl.to('.pt-line', { y: '0%', duration: 1, stagger: 0.1, ease: 'power4.out' })
+      .to('.preloader', { yPercent: -100, duration: 1, ease: 'power4.inOut', delay: 0.4 })
+      .from('.hero-title', { y: 100, opacity: 0, duration: 1.5, ease: 'power4.out' }, "-=0.5")
+      .from('.hero-subtitle', { y: 50, opacity: 0, duration: 1, ease: 'power4.out' }, "-=1");
+  }
+  progressEl.textContent = progress + '%';
+}, 40);
+
+// Marquee Infinite Loop
+gsap.to('.marquee-content', {
+  xPercent: -100,
+  repeat: -1,
+  duration: 25,
+  ease: 'linear'
+});
+
+// Scroll Triggers for Elements
+gsap.utils.toArray('.stat-card').forEach((card, i) => {
+  gsap.from(card, {
+    scrollTrigger: { trigger: '.stats-grid', start: 'top 85%' },
+    y: 50, opacity: 0, duration: 0.8, delay: i * 0.1, ease: 'power3.out'
+  });
+});
+gsap.from('.feed-container', {
+  scrollTrigger: { trigger: '.dashboard-wrapper', start: 'top 75%' },
+  y: 100, opacity: 0, duration: 1, ease: 'power4.out'
+});
+
+// ----------------------------------------------------
+// Dashboard Logic & API Integration
+// ----------------------------------------------------
+const API = 'http://localhost:5050';
+let totalEvents = 0;
+const feedEl = document.getElementById('event-feed');
+let hasClearedPlaceholder = false;
+
+function fmt(ts){
+  const d = new Date(ts);
+  return d.toLocaleTimeString('en-US',{hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+function short(h){ return h ? h.slice(0,14)+'…'+h.slice(-4) : '—'; }
+
+function updateStatus(data){
+  // Update marquee blocks
+  const blockSpans = document.querySelectorAll('.marquee-content span:nth-child(1), .marquee-content span:nth-child(5)');
+  blockSpans.forEach(s => s.textContent = 'BLOCK ' + (data.latest_block||'—'));
+  
+  // Animate numbers
+  const updateNum = (id, val) => {
+    const el = document.getElementById(id);
+    if(el.textContent != val) {
+      el.textContent = val;
+      gsap.from(el, { opacity: 0.5, scale: 0.9, duration: 0.3, ease: 'back.out(2)' });
+    }
+  };
+  updateNum('st-events', data.total_events || 0);
+  updateNum('st-sus', data.suspicious || 0);
+  updateNum('st-clean', data.clean || 0);
+  updateNum('st-alerts', data.total_alerts || 0);
+}
+
+function addEvent(ev){
+  if(!hasClearedPlaceholder) { feedEl.innerHTML = ''; hasClearedPlaceholder = true; }
+  
+  totalEvents++;
+  document.getElementById('feed-count').textContent = totalEvents + ' EVENTS';
+
+  let badgeCls = 'badge-blue';
+  let label = 'VOTE';
+  
+  // Special styling for KeeperHub Risk Assessment
+  if(ev.type === 'risk_assessment') {
+      badgeCls = ev.risk_level === 'high' ? 'badge-red' : (ev.risk_level === 'medium' ? 'badge-blue' : 'badge-green');
+      label = `RISK SCORE: ${ev.risk_score}`;
+      
+      const div = document.createElement('div');
+      div.className = `feed-item ${ev.risk_level === 'high' ? 'alert' : ''}`;
+      div.innerHTML = `
+        <div class="feed-main">
+          <div style="display:flex;align-items:center;gap:1rem;">
+            <span class="feed-badge ${badgeCls}">${label}</span>
+            <span class="feed-title" style="color: #c084fc;">${ev.agent}</span>
+          </div>
+          <div class="feed-hash" style="color: #fff; margin-top: 0.5rem;">${ev.reasoning}</div>
+          <div class="feed-meta" style="margin-top: 0.5rem;">
+            <span>🔗 Analysis Complete</span>
+            <span>🕒 ${fmt(ev.timestamp)}</span>
+          </div>
+        </div>
+      `;
+      feedEl.prepend(div);
+      while(feedEl.children.length > 80) feedEl.lastChild.remove();
+      return;
+  }
+  
+  if(ev.type === 'alert') { badgeCls = 'badge-red'; label = 'ALERT'; }
+  else if(ev.verdict === 'suspicious') { label = 'SUSPICIOUS'; }
+  else if(ev.verdict === 'clean') { badgeCls = 'badge-green'; label = 'CLEAN'; }
+
+  const div = document.createElement('div');
+  div.className = 'feed-item ' + (ev.type === 'alert' ? 'alert' : ev.verdict === 'suspicious' ? 'suspicious' : '');
+  
+  div.innerHTML = `
+    <div class="feed-main">
+      <div style="display:flex;align-items:center;gap:1rem;">
+        <span class="feed-badge ${badgeCls}">${label}</span>
+        <span class="feed-title">${ev.agent || 'CONSENSUS'}</span>
+      </div>
+      <div class="feed-hash">${ev.tx_hash}</div>
+      <div class="feed-meta">
+        ${ev.gas_gwei ? `<span>⛽ ${ev.gas_gwei} gwei</span>` : ''}
+        ${ev.block ? `<span>📦 Block ${ev.block}</span>` : ''}
+        ${ev.timestamp ? `<span>🕒 ${fmt(ev.timestamp)}</span>` : ''}
+      </div>
+    </div>
+  `;
+  feedEl.prepend(div);
+  while(feedEl.children.length > 80) feedEl.lastChild.remove();
+}
+
+function loadAXL(){
+  fetch(API+'/api/axl').then(r=>r.json()).then(nodes=>{
+    const el = document.getElementById('axl-nodes');
+    el.innerHTML = nodes.map(n => {
+      const color = n.running ? (n.peers_up > 0 ? 'var(--green)' : '#f59e0b') : '#666';
+      const status = n.running ? (n.peers_up > 0 ? `${n.peers_up} PEERS UP` : 'SEARCHING PEERS') : 'OFFLINE';
+      
+      return `
+      <div class="agent-row">
+        <div class="agent-info">
+          <div style="display:flex;align-items:center;gap:1rem;margin-bottom:0.5rem">
+            <div class="pulse-dot" style="background:${color};box-shadow:0 0 10px ${color}"></div>
+            <h3 style="margin:0">${n.agent.toUpperCase()}</h3>
+            <span class="feed-badge" style="background:rgba(255,255,255,0.1);color:${color}">${status}</span>
+          </div>
+          <p>PUBKEY: ${n.public_key ? n.public_key.slice(0,16)+'...' : n.key_prefix+'...'}</p>
+          ${n.ipv6 ? `<p>IPv6: ${n.ipv6}</p>` : ''}
+        </div>
+        <div class="agent-metrics">
+          <div>
+            <span class="metric-label">PORT</span>
+            <span class="metric-val">${n.api_port}</span>
+          </div>
+        </div>
+      </div>
+      `;
+    }).join('');
+  }).catch(()=>{});
+}
+
+function connectSSE(){
+  const es = new EventSource(API+'/api/stream');
+  es.onmessage = e => {
+    const ev = JSON.parse(e.data);
+    if(ev.type === 'connected') return;
+    addEvent(ev);
+  };
+  es.onerror = () => { es.close(); setTimeout(connectSSE, 3000); };
+}
+
+async function init(){
+  try {
+    const r = await fetch(API+'/api/events?limit=40');
+    const evs = await r.json();
+    evs.reverse().forEach(addEvent);
+  } catch(e){}
+  
+  loadAXL();
+  setInterval(loadAXL, 20000);
+  
+  const pollStats = async () => {
+    try {
+      const r = await fetch(API+'/api/status');
+      updateStatus(await r.json());
+    } catch(e){}
+  };
+  pollStats();
+  setInterval(pollStats, 10000);
+  
+  connectSSE();
+}
+
+// ── KeeperHub Intelligence Panels ─────────────────────────────────────────
+const flaggedEl = document.getElementById('flagged-list');
+const riskEl    = document.getElementById('risk-list');
+let flaggedCount = 0, riskCount = 0;
+
+function addFlagged(tx) {
+  if(flaggedEl.querySelector('.kh-empty')) flaggedEl.innerHTML = '';
+  flaggedCount++;
+  document.getElementById('flagged-count').textContent = flaggedCount + ' FLAGGED';
+
+  const div = document.createElement('div');
+  div.className = 'kh-item';
+  div.innerHTML = `
+    <div class="kh-item-top">
+      <span class="feed-badge badge-red">SENT TO KEEPERHUB</span>
+      <span style="font-family:var(--mono);font-size:0.75rem;color:#666">${fmt(tx.timestamp)}</span>
+    </div>
+    <div class="kh-hash">${tx.tx_hash || '—'}</div>
+    <div class="kh-meta">
+      ${tx.gas_price_gwei ? `<span>⛽ ${tx.gas_price_gwei} gwei</span>` : ''}
+      ${tx.detected_by   ? `<span>🤖 ${tx.detected_by}</span>` : ''}
+      ${tx.consensus     ? `<span>🗳 ${tx.consensus}</span>` : ''}
+      ${tx.contract_address ? `<span>📄 ${tx.contract_address.slice(0,10)}...</span>` : ''}
+    </div>
+  `;
+  flaggedEl.prepend(div);
+  while(flaggedEl.children.length > 30) flaggedEl.lastChild.remove();
+}
+
+function addRiskResult(ev) {
+  if(riskEl.querySelector('.kh-empty')) riskEl.innerHTML = '';
+  riskCount++;
+  document.getElementById('risk-count').textContent = riskCount + ' ANALYZED';
+
+  const score = ev.risk_score || 0;
+  const level = (ev.risk_level || 'unknown').toLowerCase();
+  const barColor = level === 'high' ? '#ef4444' : level === 'medium' ? '#f59e0b' : '#10b981';
+  const scoreColor = level === 'high' ? 'var(--red)' : level === 'medium' ? '#f59e0b' : 'var(--green)';
+  const factors = (ev.factors || []).map(f => `<span>⚠ ${f}</span>`).join('');
+
+  const div = document.createElement('div');
+  div.className = `kh-item ${level}-risk`;
+  div.innerHTML = `
+    <div class="kh-item-top">
+      <span class="feed-badge badge-purple">KEEPERHUB AI</span>
+      <div class="risk-gauge">
+        <div class="risk-bar-bg"><div class="risk-bar-fill" style="width:${score}%;background:${barColor}"></div></div>
+        <span class="risk-num" style="color:${scoreColor}">${score}</span>
+        <span class="feed-badge" style="background:rgba(255,255,255,0.05);color:${barColor};border:1px solid ${barColor}33">${(ev.risk_level||'?').toUpperCase()}</span>
+      </div>
+    </div>
+    <div class="kh-hash">${ev.tx_hash || '—'}</div>
+    ${ev.reasoning ? `<div class="kh-reasoning">${ev.reasoning}</div>` : ''}
+    ${factors ? `<div class="kh-meta" style="margin-top:0.75rem">${factors}</div>` : ''}
+    <div class="kh-meta"><span>🕒 ${fmt(ev.timestamp)}</span></div>
+  `;
+  riskEl.prepend(div);
+  gsap.from(div, { opacity: 0, y: -15, duration: 0.4, ease: 'power3.out' });
+  while(riskEl.children.length > 30) riskEl.lastChild.remove();
+}
+
+// Load existing data on init
+async function loadKHData() {
+  try {
+    const [fl, rl] = await Promise.all([
+      fetch(API+'/api/flagged').then(r=>r.json()),
+      fetch(API+'/api/risk/results').then(r=>r.json())
+    ]);
+    fl.reverse().forEach(addFlagged);
+    rl.reverse().forEach(addRiskResult);
+  } catch(e) {}
+}
+
+init();
+loadKHData();
+
+// Wire SSE events into KeeperHub panels too
+function connectSSE(){
+  const es = new EventSource(API+'/api/stream');
+  es.onmessage = e => {
+    const ev = JSON.parse(e.data);
+    if(ev.type === 'connected') return;
+    if(ev.type === 'risk_assessment') { addRiskResult(ev); addEvent(ev); return; }
+    if(ev.type === 'flagged') { addFlagged(ev); return; }
+    addEvent(ev);
+  };
+  es.onerror = () => { es.close(); setTimeout(connectSSE, 3000); };
+}
+
+// GSAP scroll for KeeperHub section
+gsap.from('.kh-panel', {
+  scrollTrigger: { trigger: '.kh-section', start: 'top 80%' },
+  y: 80, opacity: 0, duration: 1, stagger: 0.2, ease: 'power4.out'
+});
+gsap.from('#kh-section-title', {
+  scrollTrigger: { trigger: '.kh-section', start: 'top 85%' },
+  y: 40, opacity: 0, duration: 0.8, ease: 'power3.out'
+});
+</script>
+</body>
+</html>
