@@ -39,6 +39,10 @@
   .lenis.lenis-stopped { overflow: hidden; }
   .lenis.lenis-smooth iframe { pointer-events: none; }
 
+  /* Hide Scrollbar */
+  ::-webkit-scrollbar { display: none; }
+  body { -ms-overflow-style: none; scrollbar-width: none; }
+
   /* Preloader */
   .preloader {
     position: fixed;
@@ -96,7 +100,7 @@
     position: relative;
   }
   .hero-title {
-    font-size: clamp(4rem, 12vw, 15rem);
+    font-size: calc(clamp(4rem, 12vw, 15rem) - 4px);
     line-height: 0.85;
     font-weight: 900;
     text-transform: uppercase;
