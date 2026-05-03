@@ -27,7 +27,7 @@ def log_alert(tx_hash, gas_price_gwei, agent_id, tx_data=None, votes=1, consensu
     # ── Notify dashboard that this tx was flagged & sent to KeeperHub ─────────
     try:
         requests.post(
-            "http://127.0.0.1:5050/api/flag",
+            "https://triguard.onrender.com/api/flag",
             json={**payload, **(tx_data or {})},
             timeout=3
         )
